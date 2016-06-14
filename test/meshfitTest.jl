@@ -1,5 +1,5 @@
-include("meshfit.jl")
-include("objconverter.jl")
+include("../meshfit.jl")
+include("../objconverter.jl")
 using MeshFit
 using OBJConvert
 
@@ -23,4 +23,4 @@ pos, ind = createMesh(data, 10, 10, 10, -5, -5, -5, 0.5, 1, 0.1)
 println("points in raw mesh: $(size(pos)[2])")
 pos, ind = removeDoubles(pos, ind, 1e-9, true)
 
-saveObj(pos, ind, "output/temptest3.obj")
+saveObj(pos, ind, "../output/temptest3.obj")
