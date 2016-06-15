@@ -34,12 +34,14 @@ immutable MeshGrid
 
 Read [x, y, z, E] from the columns of `hits` and build a 3D density volume.
 If `dilate` is enabled, apply a gaussian filter with radius `stdev`.
+`buffer` controls the expansion of the region beyond the bounding box of the hits (where 1 is double the dimensions.)
 """
-  MeshGrid(resx, resy, resz, hits, dilate=false, stdev=20.0) = MeshGrid(minimum(hits, 2)[1:3], maximum(hits, 2)[1:3], resx, resy, resz, hits, dilate, stdev)
+  MeshGrid(resx, resy, resz, hits, dilate=false, stdev=20.0, buffer = 0.0) = MeshGrid(minimum(hits, 2)[1:3], maximum(hits, 2)[1:3], resx, resy, resz, hits, dilate, stdev, buffer)
 
-  function MeshGrid(mn::Array{Float64, 1}, mx::Array{Float64, 1}, resx::Int, resy::Int, resz::Int, hits::Array{Float64, 2}, dilate, stdev)
-    minPt = mn
-    maxPt = mx
+  function MeshGrid(mn::Array{Float64, 1}, mx::Array{Float64, 1}, resx::Int, resy::Int, resz::Int, hits::Array{Float64, 2}, dilate, stdev, buffer)
+    initdisp = mx - mn
+    minPt = mn - initdisp * buffer / 2
+    maxPt = mx + initdisp * buffer / 2
     disp = maxPt - minPt
     dims = [resx, resy, resz]
     cellvol = prod(disp ./ dims) :: Float64
