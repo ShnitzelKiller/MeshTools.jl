@@ -154,7 +154,8 @@ end
     createMesh(data, scaleX, scaleY, scaleZ, threshold, startIndex=1, uniformScale=3)
 
 Create a mesh approximating the isosurface at level `threshold` of the scalar field `data`.
-The aspect ratio is determined by `scaleX`, `scaleY`, and `scaleZ`, with a z-axis length of `uniformScale`.
+The scaling of the mesh is determined by `scaleX`, `scaleY`, and `scaleZ`
+with a global scaling of `uniformScale`.
 """
 function createMesh(data::Voxel, scaleX, scaleY, scaleZ, posX, posY, posZ, threshold, startIndex=1, uniformScale=0.001)
   positions = Array(Float64, 3, 0)
