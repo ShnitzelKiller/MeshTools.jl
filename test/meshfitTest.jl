@@ -1,7 +1,5 @@
-include("../meshfit.jl")
-include("../objconverter.jl")
-using MeshFit
-using OBJConvert
+
+using MeshTools
 
 #creates a spherical density volume
 function genData(minPt, maxPt, resx, resy, resz, fun)

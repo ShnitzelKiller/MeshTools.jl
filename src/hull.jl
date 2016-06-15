@@ -112,6 +112,76 @@ function computeconflictlists(mesh::Mesh, i::Int)
   end
 end
 
+function getfarthestpoints(points::Matrix, debug=false)
+  n = size(points)[2]
+
+  i0, i1, i2, i3 = -1, -1, -1, -1
+  maxDist = 0.0
+  for i=1:n
+    for j=i+1:n
+      dist = norm(points[:,i] - points[:,j])
+      if dist > maxDist
+        maxDist = dist
+        i0 = i
+        i1 = j
+      end
+    end
+  end
+
+  if i0 == -1
+    return 1, 2, 3, 4
+  elseif debug
+    println("first two points: $(points[:,i0]) at $i0 and $(points[:,i1]) at $i1")
+  end
+  if i1 < i0 i1, i0 = i0, i1 end
+  disp = points[:,i1] - points[:,i0]
+  maxDist = 0.0
+  for i=[1:i0-1; i0+1:i1-1; i1+1:n]
+    currdisp = points[:,i] - points[:,i0]
+    proj = disp * dot(disp, currdisp) / dot(disp, disp)
+    dist = norm(currdisp - proj)
+    if dist > maxDist
+      i2 = i
+      maxDist = dist
+    end
+  end
+
+  #if any index wasn't found, just default to the safe 1, 2, 3, 4
+  if i2 == -1
+    return 1, 2, 3, 4
+  elseif debug
+    println("third point: $(points[:,i2]) at $i2")
+  end
+
+
+
+  i0, i1, i2 = sort([i0, i1, i2])
+  disp = points[:,i1] - points[:,i0]
+  disp2 = points[:,i2] - points[:,i0]
+  maxDist = 0.0
+  for i=[1:i0-1; i0+1:i1-1; i1+1:i2-1; i2+1:n]
+    normal = normalize(cross(disp, disp2))
+    currdisp = points[:,i] - points[:,i0]
+    dist = abs(dot(currdisp, normal))
+    if dist > maxDist
+      i3 = i
+      maxDist = dist
+    end
+  end
+
+  #if any index wasn't found, just default to the safe 1, 2, 3, 4
+  if i3 == -1
+    return 1, 2, 3, 4
+  elseif debug
+    println("fourth point: $(points[:,i3]) at $i3")
+  end
+
+  if dot(points[:,i3] - points[:,i0], cross(points[:,i1] - points[:,i0], points[:,i2] - points[:,i0])) > 0
+    i1, i2 = i2, i1
+  end
+  return i0, i1, i2, i3
+end
+
 """
     convexhull(points, simplify=true, epsilon=1e-8, debug=false)
 
@@ -125,50 +195,12 @@ function convexhull(points::Matrix, simplify=true, epsilon=1e-8, debug=false)
 
   #first, build the first tetrahedron using the widest pair of points, and the farthest point from the line, then from the plane
   n = size(points)[2]
-
-  i0, i1, i2, i3 = 1, 2, 3, 4
-  p0 = points[:,i0]
-  maxDist = -1
-  for i=1:n
-    for j=i+1:n
-      dist = length(points[:,i] - points[:,j])
-      if dist > maxDist
-        maxDist = dist
-        i0 = i
-        i1 = j
-      end
-    end
+  if n < 4
+    println("too few points (minimum 4)")
+    return [], []
   end
 
-  if i1 < i0 i1, i0 = i0, i1 end
-  disp = points[:,i1] - points[:,i0]
-  maxDist = -1
-  for i=[1:i0-1; i0+1:i1-1; i1+1:n]
-    currdisp = points[:,i] - points[:,i0]
-    proj = disp * dot(disp, currdisp) / dot(disp, disp)
-    dist = length(currdisp - proj)
-    if dist > maxDist
-      i2 = i
-      maxDist = dist
-    end
-  end
-
-  i0, i1, i2 = sort([i0, i1, i2])
-  disp2 = points[:,i2] - points[:,i0]
-  maxDist = -1
-  for i=[1:i0-1; i0+1:i1-1; i1+1:i2-1; i2+1:n]
-    normal = normalize(cross(disp, disp2))
-    currdisp = points[:,i] - points[:,i0]
-    dist = abs(dot(currdisp, normal))
-    if dist > maxDist
-      i3 = i
-      maxDist = dist
-    end
-  end
-
-  if dot(points[:,i3] - points[:,i0], cross(points[:,i1] - points[:,i0], points[:,i2] - points[:,i0])) > 0
-    i1, i2 = i2, i1
-  end
+  i0, i1, i2, i3 = getfarthestpoints(points, debug)
 
   face012 = Face(i0, i1, i2)
   face023 = Face(i0, i2, i3)
@@ -204,9 +236,9 @@ function convexhull(points::Matrix, simplify=true, epsilon=1e-8, debug=false)
   push!(mesh, face031)
 
   i0, i1, i2, i3 = sort([i0, i1, i2, i3])
-
-  # println("start: $i0, $i1, $i2, $i3")
-
+  if debug
+    println("start: $i0, $i1, $i2, $i3")
+  end
   #partition vertex indices into conflict lists
   for i=[1:i0-1; i0+1:i1-1; i1+1:i2-1; i2+1:i3-1; i3+1:n]
     computeconflictlists(mesh, i)

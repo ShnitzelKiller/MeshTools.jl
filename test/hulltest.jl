@@ -1,17 +1,9 @@
-include("hull.jl")
-include("objconverter.jl")
-include("meshvolume.jl")
-#using PyPlot
+using MeshTools
 
-data = hcat([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 1], [1, 1, 0], [1, 0, 1], [0, 1, 1], [0, 2, 0.5], [1, 2, 0.5])
-#data = hcat(data, [1, 1.1, 2.2])
+data1 = randn(3, 20)
+data2 = randn(3, 20)
+data = hcat(data1, [100, 0, 0], data2)
 
-# data = randn(3, 500)
-# data = hcat(extra, data)
-
-#PyPlot.scatter3D(data[1,:], data[2,:], data[3,:])
-#plt[:show]()
-
-v, ind = convexhull(data, true)
-saveObj(v, ind, "../output/rand.obj")
+v, ind = convexhull(data, true, 1e-8, true)
 println("volume of hull: $(volume(v, ind))")
+saveObj(v, ind, "output/rand.obj")
