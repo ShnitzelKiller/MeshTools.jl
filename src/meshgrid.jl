@@ -69,7 +69,7 @@ If `dilate` is enabled, apply a gaussian filter with radius `stdev`.
       end
     end
 
-    new(mn, mx, data)
+    new(minPt, maxPt, data)
   end
 end
 
