@@ -1,4 +1,6 @@
 include("octree.jl")
+using DataStructures
+
 typealias Voxel{T} Array{T, 3}
 
 const v0 = 0x01 :: UInt8
@@ -75,16 +77,13 @@ const triTable =
 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]
 
 """
-    findFacet(data, i, j, k, threshold, startIndex, scaleX=1, scaleY=1, scaleZ=1)
+    findFacet(data, i, j, k, threshold, startIndex)
 
 Return the position and index data of a mesh approximating the isosurface of `data` through the cell
-with a lower left corner at position i, j, k. The positions can be scaled with `scaleX`, `scaleY`, and `scaleZ`.
+in i, j, k coordinates (integer positions corresponding to the corners of grid cells)
 
 """
-function findFacet(data::Voxel, i::Int, j::Int, k::Int, threshold, startIndex, scaleX=1, scaleY=1, scaleZ=1, originX = 0, originY = 0, originZ = 0)
-
-  scale = [scaleX, scaleY, scaleZ]
-  offset = [originX, originY, originZ]
+function findFacet(data::Voxel, i::Int, j::Int, k::Int, threshold, startIndex)
 
   corners = [
   i i i+1 i+1 i i i+1 i+1
@@ -116,7 +115,7 @@ function findFacet(data::Voxel, i::Int, j::Int, k::Int, threshold, startIndex, s
 
   vindex = startIndex
   edgeIndices = zeros(Int, 12)
-  positions = Array(Float64, 3, 0)
+  positions = nil(Vector{Float64})
   currEdge = 0x001
   #create the positions and indices for the positions of the isosurface on each intersected edge
   for j=1:12
@@ -128,14 +127,14 @@ function findFacet(data::Voxel, i::Int, j::Int, k::Int, threshold, startIndex, s
       data0 = cornerData[vertIndices[1]+1]
       data1 = cornerData[vertIndices[2]+1]
       point = pos0 + (threshold - data0) * (pos1 - pos0) / (data1 - data0)
-      positions = hcat(positions, point .* scale - offset)
+      positions = cons(point, positions)
       vindex += 1
     end
     currEdge <<= 1
   end
 
   polyVerts = triTable[:, index+1]
-  indices = Array(Int, 0)
+  indices = nil(Int)
 
   #using the generated positions and indices, write final sequence of indices
   #to the index array, according to the triangles making up the isosurface
@@ -143,11 +142,21 @@ function findFacet(data::Voxel, i::Int, j::Int, k::Int, threshold, startIndex, s
   for i=1:length(polyVerts)
     if polyVerts[i] == 0 break end
     if triCounter % 3 == 0
-      indices = vcat(indices, [edgeIndices[polyVerts[i-2]], edgeIndices[polyVerts[i-1]], edgeIndices[polyVerts[i]]])
+      indices = cons(edgeIndices[polyVerts[i-2]], indices)
+      indices = cons(edgeIndices[polyVerts[i-1]], indices)
+      indices = cons(edgeIndices[polyVerts[i]], indices)
     end
     triCounter += 1
   end
   return positions, indices
+end
+
+"concatenate the reverse of l1 to l2"
+function revcat{T}(l1::LinkedList{T}, l2::LinkedList{T})
+  for h in l1
+    l2 = cons(h, l2)
+  end
+  return l2
 end
 
 """
@@ -158,23 +167,34 @@ The scaling of the mesh is determined by `scaleX`, `scaleY`, and `scaleZ`
 with a global scaling of `uniformScale`.
 """
 function createMesh(data::Voxel, scaleX, scaleY, scaleZ, posX, posY, posZ, threshold, startIndex=1, uniformScale=0.001)
-  positions = Array(Float64, 3, 0)
-  indices = Array(Int, 0)
+  positions = nil(Vector{Float64})
+  indices = nil(Int)
   currIndex = startIndex
   dims = size(data)
   scaleX, scaleY, scaleZ = scaleX / dims[1] * uniformScale, scaleY / dims[2] * uniformScale, scaleZ / dims[3] * uniformScale
+  posX, posY, posZ = posX * uniformScale, posY * uniformScale, posZ * uniformScale
   #compile the isosurfaces of all the cells in the volume into a single mesh
   for i=1:dims[1]-1
     for j=1:dims[2]-1
       for k=1:dims[3]-1
-        pos, ind = findFacet(data, i, j, k, threshold, currIndex, scaleX, scaleY, scaleZ, posX * uniformScale, posY * uniformScale, posZ * uniformScale)
-        positions = hcat(positions, pos)
-        indices = vcat(indices, ind)
-        currIndex += size(pos)[2]
+        pos, ind = findFacet(data, i, j, k, threshold, currIndex)
+        positions = revcat(reverse(pos), positions)
+        indices = revcat(reverse(ind), indices)
+        currIndex += length(pos)
       end
     end
   end
-  return positions, indices
+  lenp = length(positions)
+  leni = length(indices)
+  positionsvec = Array(Float64, 3, lenp)
+  indicesvec = Array(Int, leni)
+  for (i, pos) in enumerate(positions)
+    positionsvec[:,lenp-i+1] = pos .* [scaleX, scaleY, scaleZ] + [posX, posY, posZ]
+  end
+  for (i, ind) in enumerate(indices)
+    indicesvec[leni-i+1] = ind
+  end
+  return positionsvec, indicesvec
 end
 
 type BoundsChecker
