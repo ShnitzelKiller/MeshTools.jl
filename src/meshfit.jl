@@ -274,4 +274,83 @@ function removeDoubles(verts, indices, tol=1e-8, verbose=false)
   return doubles.positions, newIndices
 end
 
-# TODO: function countParts(maxIndex, indices)
+function countParts(maxIndex, indices)
+  indexSet = IntSet(1:maxIndex)
+  parts = 0
+  while !isempty(indexSet)
+    parts += 1
+    curr = first(indexSet)
+    stack = Stack(Int)
+    push!(stack, curr)
+    delete!(indexSet, curr)
+
+    while !isempty(stack)
+      curr = pop!(stack)
+      for i=1:3:length(indices)
+        if indices[i] == curr || indices[i+1] == curr || indices[i+2] == curr
+          if in(indices[i], indexSet)
+            delete!(indexSet, indices[i])
+            push!(stack, indices[i])
+          end
+          if in(indices[i+1], indexSet)
+            delete!(indexSet, indices[i+1])
+            push!(stack, indices[i+1])
+          end
+          if in(indices[i+2], indexSet)
+            delete!(indexSet, indices[i+2])
+            push!(stack, indices[i+2])
+          end
+        end
+      end
+    end
+  end
+  return parts
+end
+
+function separate(maxIndex, indices)
+  indexSet = IntSet(1:maxIndex)
+  parts = nil(Vector{Int64})
+  while !isempty(indexSet)
+
+    curr = first(indexSet)
+    stack = Stack(Int)
+    push!(stack, curr)
+    delete!(indexSet, curr)
+    part = nil(Int64)
+
+    while !isempty(stack)
+      curr = pop!(stack)
+      for i=1:3:length(indices)
+        if indices[i] == curr || indices[i+1] == curr || indices[i+2] == curr
+          in0 = in(indices[i], indexSet)
+          in1 = in(indices[i+1], indexSet)
+          in2 = in(indices[i+2], indexSet)
+          if in0
+            delete!(indexSet, indices[i])
+            push!(stack, indices[i])
+          end
+          if in1
+            delete!(indexSet, indices[i+1])
+            push!(stack, indices[i+1])
+          end
+          if in2
+            delete!(indexSet, indices[i+2])
+            push!(stack, indices[i+2])
+          end
+          if in0 || in1 || in2
+            part = cons(indices[i], part)
+            part = cons(indices[i+1], part)
+            part = cons(indices[i+2], part)
+          end
+        end
+      end
+    end
+    len = length(part)
+    partarr = Array(Int, len)
+    for (i, ind) in enumerate(part)
+      partarr[len-i+1] = ind
+    end
+    parts = cons(partarr, parts)
+  end
+  return parts
+end

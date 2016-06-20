@@ -1,5 +1,6 @@
 
 using MeshTools
+using Base.Test
 
 #creates a spherical density volume
 function genData(minPt, maxPt, resx, resy, resz, fun)
@@ -22,3 +23,14 @@ println("points in raw mesh: $(size(pos)[2])")
 pos, ind = removeDoubles(pos, ind, 1e-9, true)
 
 saveObj(pos, ind, "../output/temptest3.obj")
+
+p = countParts(size(pos)[2], ind)
+@test p == 1
+
+ind2 = [1, 2, 3, 1, 4, 5, 1, 6, 7]
+@test countParts(7, ind2) == 1
+
+ind3 = [1, 2, 3, 1, 4, 5, 6, 7, 8]
+@test countParts(8, ind3) == 2
+
+println(separate(8, ind3))
