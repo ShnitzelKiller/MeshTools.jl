@@ -189,7 +189,7 @@ construct the convex hull of this mesh using the 3D points specified in the
 columns of `points`.
 
 """
-function convexhull(points::Matrix, simplify=true, epsilon=1e-8, debug=false)
+function convexhull(points::Matrix, simplify=true, epsilon=0, debug=false)
 
 
 
