@@ -278,12 +278,11 @@ function countParts(maxIndex, indices)
   indexSet = IntSet(1:maxIndex)
   parts = 0
   while !isempty(indexSet)
-    parts += 1
     curr = first(indexSet)
     stack = Stack(Int)
     push!(stack, curr)
     delete!(indexSet, curr)
-
+    found = false
     while !isempty(stack)
       curr = pop!(stack)
       for i=1:3:length(indices)
@@ -291,18 +290,22 @@ function countParts(maxIndex, indices)
           if in(indices[i], indexSet)
             delete!(indexSet, indices[i])
             push!(stack, indices[i])
+            found = true
           end
           if in(indices[i+1], indexSet)
             delete!(indexSet, indices[i+1])
             push!(stack, indices[i+1])
+            found = true
           end
           if in(indices[i+2], indexSet)
             delete!(indexSet, indices[i+2])
             push!(stack, indices[i+2])
+            found = true
           end
         end
       end
     end
+    if found parts += 1 end
   end
   return parts
 end
@@ -317,7 +320,7 @@ function separate(maxIndex, indices)
     push!(stack, curr)
     delete!(indexSet, curr)
     part = nil(Int64)
-
+    found = false
     while !isempty(stack)
       curr = pop!(stack)
       for i=1:3:length(indices)
@@ -341,16 +344,19 @@ function separate(maxIndex, indices)
             part = cons(indices[i], part)
             part = cons(indices[i+1], part)
             part = cons(indices[i+2], part)
+            found = true
           end
         end
       end
     end
-    len = length(part)
-    partarr = Array(Int, len)
-    for (i, ind) in enumerate(part)
-      partarr[len-i+1] = ind
+    if found
+      len = length(part)
+      partarr = Array(Int, len)
+      for (i, ind) in enumerate(part)
+        partarr[len-i+1] = ind
+      end
+      parts = cons(partarr, parts)
     end
-    parts = cons(partarr, parts)
   end
   return parts
 end

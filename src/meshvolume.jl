@@ -1,7 +1,7 @@
 signedvolume(p1, p2, p3) = dot(cross(p1, p2), p3)/6.0
 
 "Compute the volume of a mesh defined by `points` and `indices`. Mesh must be closed with outward facing normals."
-function volume(points, indices)
+function volume(points :: Matrix{Float64}, indices :: Vector{Int})
   vol = 0
   meanpoint = mean(points, 2)[:, 1]
   for i=1:div(length(indices), 3)
@@ -14,7 +14,7 @@ function volume(points, indices)
 end
 
 "Compute the surface area of a mesh defined by `points` and `indices`."
-function surfacearea(points, indices)
+function surfacearea(points :: Matrix{Float64}, indices :: Vector{Int})
   surf = 0
   for i=1:div(length(indices), 3)
     p1 = points[:, indices[(i-1)*3 + 1]]
