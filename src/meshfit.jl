@@ -1,4 +1,6 @@
 include("octree.jl")
+include("meshgrid.jl")
+
 using DataStructures
 
 typealias Voxel{T} Array{T, 3}
@@ -157,6 +159,10 @@ function revcat{T}(l1::LinkedList{T}, l2::LinkedList{T})
     l2 = cons(h, l2)
   end
   return l2
+end
+
+function createMesh(grid::MeshGrid, threshold, startIndex=1, uniformScale=0.001)
+  return createMesh(grid.data, (grid.maxPt - grid.minPt)..., grid.minPt..., threshold, startIndex, uniformScale)
 end
 
 """
