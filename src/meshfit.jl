@@ -317,39 +317,28 @@ function countParts(maxIndex, indices)
 end
 
 function separate(maxIndex, indices)
-  indexSet = IntSet(1:maxIndex)
+  faceSet = IntSet(1:div(length(indices), 3))
   parts = nil(Vector{Int64})
-  while !isempty(indexSet)
-
-    curr = first(indexSet)
+  while !isempty(faceSet)
+    println(faceSet)
+    curr = first(faceSet)
     stack = Stack(Int)
     push!(stack, curr)
-    delete!(indexSet, curr)
-    part = nil(Int64)
+    delete!(faceSet, curr)
+    part = nil(Int)
     found = false
     while !isempty(stack)
       curr = pop!(stack)
+      i0 = curr*3 - 2
+      part = cons(indices[i0], part)
+      part = cons(indices[i0+1], part)
+      part = cons(indices[i0+2], part)
       for i=1:3:length(indices)
-        if indices[i] == curr || indices[i+1] == curr || indices[i+2] == curr
-          in0 = in(indices[i], indexSet)
-          in1 = in(indices[i+1], indexSet)
-          in2 = in(indices[i+2], indexSet)
-          if in0
-            delete!(indexSet, indices[i])
-            push!(stack, indices[i])
-          end
-          if in1
-            delete!(indexSet, indices[i+1])
-            push!(stack, indices[i+1])
-          end
-          if in2
-            delete!(indexSet, indices[i+2])
-            push!(stack, indices[i+2])
-          end
-          if in0 || in1 || in2
-            part = cons(indices[i], part)
-            part = cons(indices[i+1], part)
-            part = cons(indices[i+2], part)
+        f = div(i-1, 3)+1
+        if in(f, faceSet)
+          if indices[i] == indices[i0] || indices[i+1] == indices[i0] || indices[i+2] == indices[i0] || indices[i] == indices[i0+1] || indices[i+1] == indices[i0+1] || indices[i+2] == indices[i0+1] || indices[i] == indices[i0+2] || indices[i+1] == indices[i0+2] || indices[i+2] == indices[i0+2]
+            push!(stack, f)
+            delete!(faceSet, f)
             found = true
           end
         end

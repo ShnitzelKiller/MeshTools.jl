@@ -17,8 +17,7 @@ function linearFilter(filter, a::Vector)
 end
 
 function makeGaussianFilter(stdev)
-  coef = 1/(sqrt(2*pi) * stdev)
-  g(x) = coef * exp(-x^2/(2 * stdev^2))
+  g(x) = exp(-x^2/(2 * stdev^2))
   f(a) = linearFilter(g, a)
   return f
 end
@@ -44,7 +43,6 @@ If `dilate` is enabled, apply a gaussian filter with radius `stdev`.
     maxPt = mx + initdisp .* buffer / 2
     disp = maxPt - minPt
     dims = [resx, resy, resz]
-    cellvol = prod(disp ./ dims) :: Float64
     data = zeros(resx, resy, resz)
 
     #first pass: read the position data directly into the corresponding cells
@@ -56,12 +54,13 @@ If `dilate` is enabled, apply a gaussian filter with radius `stdev`.
       realx = convert(Int, clamp(ceil(realPos[1]), 1, resx))
       realy = convert(Int, clamp(ceil(realPos[2]), 1, resy))
       realz = convert(Int, clamp(ceil(realPos[3]), 1, resz))
-      data[realx, realy, realz] += hits[4, i]/cellvol
+      data[realx, realy, realz] += hits[4, i]
 
     end
     #second pass: blur the data (optional)
     if dilate
-      stdevx, stdevy, stdevz = ((stdev * dims ./ disp)...)
+      factor = dims ./ disp
+      stdevx, stdevy, stdevz = ((stdev * factor)...)
 
       gaussianFilters = (makeGaussianFilter(stdevx), makeGaussianFilter(stdevy), makeGaussianFilter(stdevz))
       for j=1:3
@@ -73,12 +72,12 @@ If `dilate` is enabled, apply a gaussian filter with radius `stdev`.
   end
 end
 
-"Get the energy of the cell at `i`, `j`, `k` using the density and volume of the cell."
-function getenergy(grid::MeshGrid, i, j, k)
-  dims = size(grid.data)
-  cellvol = prod((grid.maxPt - grid.minPt) ./ [dims[1], dims[2], dims[3]]) :: Float64
-  return grid.data[i, j, k] * cellvol
-end
+# "Get the energy of the cell at `i`, `j`, `k` using the density and volume of the cell."
+# function getenergy(grid::MeshGrid, i, j, k)
+#   dims = size(grid.data)
+#   cellvol = prod((grid.maxPt - grid.minPt) ./ [dims[1], dims[2], dims[3]]) :: Float64
+#   return grid.data[i, j, k] * cellvol
+# end
 
 "Compute the edge weight from the given voxel along the given axis (as defined in this module) using the provided binary function func of the pixel values"
 function edgeWeight(grid::MeshGrid, func, i, j, k, axis)

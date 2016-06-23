@@ -298,7 +298,7 @@ function convexhull(points::Matrix, simplify=true, epsilon=0, debug=false)
       # println("horizon: $(horizon)")
       # println("Farthest: $(farthest)")
       # println("number of faces visited: $(length(visited))")
-      horizon, outsidefaces = makesequential(horizon, outsidefaces)
+      horizon, outsidefaces = makesequential(horizon, outsidefaces, debug)
       # lastpoint = first(horizon)[2]
       # cyclic=true
       # for edge in horizon
@@ -362,18 +362,25 @@ end
 function assertunique{T}(things::LinkedList{T})
   thingset = Dict{T, T}()
   for thing in things
-    @assert !haskey(thingset, thing) "duplicate $T found in list, $(thingset[thing]===thing ? "identical" : "not indentical")"
+    @assert !haskey(thingset, thing) "duplicate $T $(show(thing)) found in list, $(thingset[thing]===thing ? "identical" : "not indentical")"
     thingset[thing] = thing
   end
 end
 
-function makesequential(edges, outfaces)
+function makesequential(edges, outfaces, debug)
+  if debug
+    for (edge, face) in zip(edges, outfaces)
+      @assert (edge == (face.i1, face.i0)) || (edge == (face.i2, face.i1)) || (edge == (face.i0, face.i2)) "face $(show(face)) doesn't match edge $(edge)."
+    end
+  end
   len = length(edges)
   seq = list(first(edges))
   seq2 = list(first(outfaces))
+  edgearray = [tail(edges)...]
+  facearray = [tail(outfaces)...]
   for i=1:len-1
     found = false
-    for (edge, face) in zip(edges, outfaces)
+    for (edge, face) in zip(edgearray, facearray)
       if edge[1] == first(seq)[2]
         seq = cons(edge, seq)
         seq2 = cons(face, seq2)
@@ -381,7 +388,12 @@ function makesequential(edges, outfaces)
         break
       end
     end
-    @assert found "non-sequential edges in horizon: $(edges)"
+    if debug @assert found "non-sequential edges in horizon: $(edges)" end
+  end
+  if debug
+    startindex = first(edges)[1]
+    endindex = first(seq)[2]
+    @assert endindex == startindex "non-cyclic edges in horizon: $(seq)"
   end
   return seq, seq2
 end
@@ -411,6 +423,10 @@ function assertmesh(mesh::Mesh)
       elseif startind == 3
         @assert (neighb[i].i2 == inds[i%3 + 1] && neighb[i].i0 == inds[i]) errstr
       end
+    end
+    #check degeneracy
+    if face.normal[1] === NaN
+      @assert false "Degenerate face $(show(face))"
     end
   end
 end
