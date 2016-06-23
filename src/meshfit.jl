@@ -316,7 +316,7 @@ function countParts(maxIndex, indices)
   return parts
 end
 
-function separate(maxIndex, indices)
+function separate(indices)
   faceSet = IntSet(1:div(length(indices), 3))
   parts = nil(Vector{Int64})
   while !isempty(faceSet)
