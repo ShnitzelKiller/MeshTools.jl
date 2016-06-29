@@ -161,7 +161,7 @@ function revcat{T}(l1::LinkedList{T}, l2::LinkedList{T})
   return l2
 end
 
-function createMesh(grid::MeshGrid, threshold, startIndex=1, uniformScale=0.001)
+function createMesh(grid::MeshGrid, threshold, startIndex=1, uniformScale=1)
   return createMesh(grid.data, (grid.maxPt - grid.minPt)..., grid.minPt..., threshold, startIndex, uniformScale)
 end
 
@@ -172,7 +172,7 @@ Create a mesh approximating the isosurface at level `threshold` of the scalar fi
 The scaling of the mesh is determined by `scaleX`, `scaleY`, and `scaleZ`
 with a global scaling of `uniformScale`.
 """
-function createMesh(data::Voxel, scaleX, scaleY, scaleZ, posX, posY, posZ, threshold, startIndex=1, uniformScale=0.001)
+function createMesh(data::Voxel, scaleX, scaleY, scaleZ, posX, posY, posZ, threshold, startIndex=1, uniformScale=1)
   positions = nil(Vector{Float64})
   indices = nil(Int)
   currIndex = startIndex
