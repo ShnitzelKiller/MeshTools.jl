@@ -4,6 +4,7 @@ const yplus = 2
 const yminus = -2
 const zplus = 3
 const zminus = -3
+const mindisp = 0.1
 
 function linearFilter(filter, a::Vector)
   len = length(a)
@@ -39,6 +40,12 @@ If `dilate` is enabled, apply a gaussian filter with radius `stdev`.
 
   function MeshGrid(mn::Array{Float64, 1}, mx::Array{Float64, 1}, resx::Int, resy::Int, resz::Int, hits::Array{Float64, 2}, dilate, stdev, buffer)
     initdisp = mx - mn
+    for i=1:3
+        if initdisp[i] == 0
+            initdisp[i] = mindisp
+            mx[i] += mindisp
+        end
+    end
     minPt = mn - initdisp .* buffer / 2
     maxPt = mx + initdisp .* buffer / 2
     disp = maxPt - minPt
