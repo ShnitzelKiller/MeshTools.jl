@@ -1,5 +1,6 @@
 module MeshTools
-export convexhull, createMesh, findFacet, removeDoubles, Node, saveObj, volume, surfacearea, MeshGrid, countParts, separate, linearFilter, makeGaussianFilter, joinmeshes
+export convexhull, createMesh, findFacet, removeDoubles, Node, saveObj, volume, surfacearea, MeshGrid, countParts, separate, linearFilter, makeGaussianFilter, joinmeshes, Mesh
+typealias Mesh Tuple{Matrix{Float64}, Vector{Int}}
 include("meshfit.jl")
 include("meshvolume.jl")
 include("hull.jl")

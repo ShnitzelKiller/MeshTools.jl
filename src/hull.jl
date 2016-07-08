@@ -30,18 +30,18 @@ function computeface(face::Face, points::Matrix)
   face.area = area/2.0
 end
 
-type Mesh
+type LinkedMesh
   faces::LinkedList{Face}
   vertices::Matrix
-  Mesh(points) = new(nil(Face), points)
+  LinkedMesh(points) = new(nil(Face), points)
 end
 
 import Base.push!
-function push!(mesh::Mesh, face::Face)
+function push!(mesh::LinkedMesh, face::Face)
   mesh.faces = cons(face, mesh.faces)
 end
 
-function getmeshdata(mesh::Mesh, simplify=true)
+function getmeshdata(mesh::LinkedMesh, simplify=true)
   indices = nil(Int)
   for face in mesh.faces
     if !face.disabled
@@ -90,7 +90,7 @@ function getmeshdata(mesh::Mesh, simplify=true)
   end
 end
 
-function computeconflictlists(mesh::Mesh, i::Int)
+function computeconflictlists(mesh::LinkedMesh, i::Int)
   maxDist = 0
   farFace = head(mesh.faces)
   for face in mesh.faces
@@ -197,7 +197,7 @@ function convexhull(points::Matrix, simplify=true, epsilon=0, debug=false)
   n = size(points)[2]
   if n < 4
     println("too few points (minimum 4)")
-    return [], []
+    return Array(Float64, 3, 0), []
   end
 
   i0, i1, i2, i3 = getfarthestpoints(points, debug)
@@ -229,7 +229,7 @@ function convexhull(points::Matrix, simplify=true, epsilon=0, debug=false)
   face031.f2 = face012
 
 
-  mesh = Mesh(points)
+  mesh = LinkedMesh(points)
   push!(mesh, face012)
   push!(mesh, face023)
   push!(mesh, face321)
@@ -398,7 +398,7 @@ function makesequential(edges, outfaces, debug)
   return seq, seq2
 end
 
-function assertmesh(mesh::Mesh)
+function assertmesh(mesh::LinkedMesh)
   for face in mesh.faces
     if face.disabled continue end
     neighb = [face.f0, face.f1, face.f2]
