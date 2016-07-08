@@ -17,3 +17,10 @@ function joinmeshes(meshes...)
     end
     return vertices, indices
 end
+
+function invertnormals(mesh)
+    for i=1:div(length(mesh[2]), 3)
+        mesh[2][i*3], mesh[2][i*3-1] = mesh[2][i*3-1], mesh[2][i*3]
+    end
+    return mesh
+end
