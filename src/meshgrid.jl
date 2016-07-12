@@ -23,6 +23,16 @@ function makeGaussianFilter(stdev)
     return f
 end
 
+function postoarray(dims, minPt::Vector, maxPt::Vector, pos::Vector)
+    disp = maxPt - minPt
+    relPos = pos - minPt
+    realPos = relPos ./ disp .* [dims...]
+    realx = convert(Int, clamp(ceil(realPos[1]), 1, dims[1]))
+    realy = convert(Int, clamp(ceil(realPos[2]), 1, dims[2]))
+    realz = convert(Int, clamp(ceil(realPos[3]), 1, dims[3]))
+    return [realx, realy, realz]
+end
+
 "A uniform grid containing density information loaded from point data"
 immutable MeshGrid
     minPt::Array{Float64, 1}
@@ -38,7 +48,7 @@ immutable MeshGrid
     """
     MeshGrid(resx, resy, resz, hits, dilate=false, stdev=20.0, buffer = [0.0, 0.0, 0.0], threshold=Inf) = MeshGrid(minimum(hits, 2)[1:3], maximum(hits, 2)[1:3], resx, resy, resz, hits, dilate, stdev, buffer, threshold)
 
-    function MeshGrid(mn::Array{Float64, 1}, mx::Array{Float64, 1}, resx::Int, resy::Int, resz::Int, hits::Array{Float64, 2}, dilate, stdev, buffer, threshold)
+    function MeshGrid(mn::Vector, mx::Vector, resx::Int, resy::Int, resz::Int, hits::Matrix, dilate::Bool, stdev::Real, buffer::Vector, threshold::Real)
 
         initdisp = mx - mn
         for i=1:3
@@ -61,13 +71,7 @@ immutable MeshGrid
             #first pass: read the position data directly into the corresponding cells
             for i=1:size(hits, 2)
                 pos = hits[1:3, i]
-                relPos = pos - minPt
-                realPos = relPos ./ disp .* dims
-
-                realx = convert(Int, clamp(ceil(realPos[1]), 1, resx))
-                realy = convert(Int, clamp(ceil(realPos[2]), 1, resy))
-                realz = convert(Int, clamp(ceil(realPos[3]), 1, resz))
-                data[realx, realy, realz] += hits[4, i]
+                data[postoarray(dims, minPt, maxPt, pos)...] += hits[4, i]
 
             end
             #second pass: blur the data (optional)
@@ -113,6 +117,13 @@ immutable MeshGrid
         end
         new(minPt, maxPt, data)
     end
+end
+
+import Base.getindex
+"Get the energy of the field at position x, y, z"
+function getindex(grid::MeshGrid, x::Real, y::Real, z::Real)
+    dims = size(grid.data)
+    return grid.data[postoarray(dims, grid.minPt, grid.maxPt, [x, y, z])...]
 end
 
 # "Get the energy of the cell at `i`, `j`, `k` using the density and volume of the cell."
