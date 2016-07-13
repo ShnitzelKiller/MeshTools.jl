@@ -6,6 +6,8 @@ const zplus = 3
 const zminus = -3
 const mindisp = 0.1
 
+lerp(x, y, alpha) = x*alpha + y*(1-alpha)
+
 function linearFilter(filter, a::Vector)
     len = length(a)
     b = zeros(len)
@@ -27,10 +29,12 @@ function postoarray(dims, minPt::Vector, maxPt::Vector, pos::Vector)
     disp = maxPt - minPt
     relPos = pos - minPt
     realPos = relPos ./ disp .* [dims...]
-    realx = convert(Int, clamp(ceil(realPos[1]), 1, dims[1]))
-    realy = convert(Int, clamp(ceil(realPos[2]), 1, dims[2]))
-    realz = convert(Int, clamp(ceil(realPos[3]), 1, dims[3]))
-    return [realx, realy, realz]
+    realx = clamp(ceil(Int, realPos[1]), 1, dims[1])
+    realy = clamp(ceil(Int, realPos[2]), 1, dims[2])
+    realz = clamp(ceil(Int, realPos[3]), 1, dims[3])
+    realInd = [realx, realy, realz]
+    offset = realPos - realInd + 0.5
+    return realInd, offset
 end
 
 "A uniform grid containing density information loaded from point data"
@@ -71,7 +75,7 @@ immutable MeshGrid
             #first pass: read the position data directly into the corresponding cells
             for i=1:size(hits, 2)
                 pos = hits[1:3, i]
-                data[postoarray(dims, minPt, maxPt, pos)...] += hits[4, i]
+                data[postoarray(dims, minPt, maxPt, pos)[1]...] += hits[4, i]
 
             end
             #second pass: blur the data (optional)
@@ -123,7 +127,33 @@ import Base.getindex
 "Get the energy of the field at position x, y, z"
 function getindex(grid::MeshGrid, x::Real, y::Real, z::Real)
     dims = size(grid.data)
-    return grid.data[postoarray(dims, grid.minPt, grid.maxPt, [x, y, z])...]
+    realInd, offset = postoarray(dims, grid.minPt, grid.maxPt, [x, y, z])
+
+    xother = clamp(offset[1] > 0 ? realInd[1] + 1 : realInd[1] - 1, 1, dims[1])
+    yother = clamp(offset[2] > 0 ? realInd[2] + 1 : realInd[2] - 1, 1, dims[2])
+    zother = clamp(offset[3] > 0 ? realInd[3] + 1 : realInd[3] - 1, 1, dims[3])
+
+    offset = abs(offset)
+
+    v000 = grid.data[realInd...]
+    v100 = grid.data[xother,     realInd[2], realInd[3]]
+    v010 = grid.data[realInd[1], yother,     realInd[3]]
+    v110 = grid.data[xother,     yother,     realInd[3]]
+    v001 = grid.data[realInd[1], realInd[2], zother]
+    v101 = grid.data[xother,     realInd[2], zother]
+    v011 = grid.data[realInd[1], yother,     zother]
+    v111 = grid.data[xother,     yother,     zother]
+
+    v00 = lerp(v001, v000, offset[3])
+    v10 = lerp(v101, v100, offset[3])
+    v01 = lerp(v011, v010, offset[3])
+    v11 = lerp(v111, v110, offset[3])
+
+    v0 = lerp(v01, v00, offset[2])
+    v1 = lerp(v11, v10, offset[2])
+
+    v = lerp(v1, v0, offset[1])
+    return v
 end
 
 # "Get the energy of the cell at `i`, `j`, `k` using the density and volume of the cell."
