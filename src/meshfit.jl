@@ -161,12 +161,18 @@ function revcat{T}(l1::LinkedList{T}, l2::LinkedList{T})
   return l2
 end
 
+"""
+    createMesh(grid, threshold, startIndex=1, uniformScale=1)
+Create a mesh approximating the isosurface at level `threshold` of the scalar field `grid`.
+The scaling of the mesh is determined based on the dimensions of `grid`, as well as the
+optional uniformScale parameter.
+"""
 function createMesh(grid::MeshGrid, threshold, startIndex=1, uniformScale=1)
   return createMesh(grid.data, (grid.maxPt - grid.minPt)..., grid.minPt..., threshold, startIndex, uniformScale)
 end
 
 """
-    createMesh(data, scaleX, scaleY, scaleZ, threshold, startIndex=1, uniformScale=3)
+    createMesh(data, scaleX, scaleY, scaleZ, threshold, startIndex=1, uniformScale=1)
 
 Create a mesh approximating the isosurface at level `threshold` of the scalar field `data`.
 The scaling of the mesh is determined by `scaleX`, `scaleY`, and `scaleZ`

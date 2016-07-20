@@ -1,5 +1,5 @@
 using Formatting
-"saveObj(positions, indices, \"filename\") saves the mesh represented by the given verts and tris to a file"
+"saveObj(positions, indices, \"filename\") saves the mesh represented by the given verts and tris to an OBJ file"
 function saveObj(positions, indices, filename="untitled.obj")
   f = open(filename, "w")
   for i=1:size(positions)[2]
@@ -12,6 +12,7 @@ function saveObj(positions, indices, filename="untitled.obj")
   close(f)
 end
 
+"saveOff(positions, indices, \"filename\") saves the mesh represented by the given verts and tris to an OFF file"
 function saveOff(positions, indices, filename="untitled.obj")
   f = open(filename, "w")
   write(f, "OFF\n")
@@ -26,6 +27,7 @@ function saveOff(positions, indices, filename="untitled.obj")
   close(f)
 end
 
+"Helper function for saveOff"
 function edgecount(indices)
     edgeSet = Set{Vector{Int}}()
     for i=1:div(length(indices), 3)

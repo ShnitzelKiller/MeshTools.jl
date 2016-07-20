@@ -44,7 +44,7 @@ immutable MeshGrid
     data::Array{Float64, 3}
 
     """
-    MeshGrid(x_resolution, y_resolution, z_resolution, hits, dilate=false, stdev=20.0)
+    MeshGrid(x_resolution, y_resolution, z_resolution, hits, dilate=false, stdev=20.0, buffer=[0, 0, 0], threshold=Inf)
 
     Read [x, y, z, E] from the columns of `hits` and build a 3D density volume.
     If `dilate` is enabled, apply a gaussian filter with radius `stdev`.
@@ -53,7 +53,7 @@ immutable MeshGrid
     MeshGrid(resx, resy, resz, hits, dilate=false, stdev=20.0, buffer = [0.0, 0.0, 0.0], threshold=Inf) = MeshGrid(minimum(hits, 2)[1:3], maximum(hits, 2)[1:3], resx, resy, resz, hits, dilate, stdev, buffer, threshold)
 
     function MeshGrid(mn::Vector, mx::Vector, resx::Int, resy::Int, resz::Int, hits::Matrix, dilate::Bool, stdev::Real, buffer::Vector, threshold::Real)
-
+        if stdev == 0 dilate = false end
         initdisp = mx - mn
         for i=1:3
             if initdisp[i] == 0
