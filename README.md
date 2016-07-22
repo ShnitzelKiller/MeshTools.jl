@@ -45,6 +45,7 @@ Values are linearly interpolated so as to give continuous results.
 ### Marching Cubes
 - `createMesh{T}(data :: Array{T, 3}, scaleX, scaleY, scaleZ, originX, originY, originZ, threshold, startIndex=1, uniformScale=1)`
 - `createMesh(grid :: MeshGrid, threshold, startIndex=1, uniformScale=1)`
+
  creates the marching cubes triangulation of the 3D array `data` with the given dimensions and origin point, with an optional shifted mesh index position and uniform scale. The former might be useful when creating mesh parts with the intention of merging them together. A simplified constructor exists for MeshGrid objects which already contain position information.
 ### Analysis Tools
 A number of functions are provided which act on meshes:
