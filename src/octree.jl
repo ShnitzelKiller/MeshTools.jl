@@ -122,13 +122,12 @@ function map(f, octree::Node)
   end
 end
 
-import Base.call
 type VertexCounter
   count::Int
   VertexCounter() = new(0)
 end
 
-function call(counter::VertexCounter, pos, ind)
+function (counter::VertexCounter)(pos, ind)
   counter.count += length(ind)
 end
 
