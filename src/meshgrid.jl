@@ -4,6 +4,7 @@ const yplus = 2
 const yminus = -2
 const zplus = 3
 const zminus = -3
+
 const mindisp = 0.1
 
 lerp(x, y, alpha) = x*alpha + y*(1-alpha)
@@ -208,7 +209,7 @@ function getendpoint(e::Edge)
 end
 
 """
-segment(grid, k_int=1.0, func=(a, b) -> abs(a-b))
+    segment(grid, k_int=1.0, func=(a, b) -> abs(a-b))
 
 Partition the set of all grid coordinates into disjoint subsets, satisfying the courseness and fineness
 criterea specified in the penalty function
