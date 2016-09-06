@@ -127,9 +127,9 @@ type VertexCounter
   VertexCounter() = new(0)
 end
 
-function (counter::VertexCounter)(pos, ind)
+@compat (function (counter::VertexCounter)(pos, ind)
   counter.count += length(ind)
-end
+end)
 
 import Base.length
 function length(octree::Node)
