@@ -222,8 +222,7 @@ type DoubleFinder
   DoubleFinder() = new(1, Dict(), Array(Float64, 3, 0))
 end
 
-import Base.call
-function call(finder::DoubleFinder, pos, ind)
+function (finder::DoubleFinder)(pos, ind)
   finder.positions = hcat(finder.positions, pos[:, 1])
   for i in ind
     finder.indexMap[i] = finder.index
@@ -231,7 +230,7 @@ function call(finder::DoubleFinder, pos, ind)
   finder.index += 1
 end
 
-function call(checker::BoundsChecker, pos, ind)
+function (checker::BoundsChecker)(pos, ind)
   disp = abs(maximum(pos, 2) - minimum(pos, 2))
   if disp[1] > checker.disp[1] checker.disp[1] = disp[1] end
   if disp[2] > checker.disp[2] checker.disp[2] = disp[2] end
