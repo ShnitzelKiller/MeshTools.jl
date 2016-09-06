@@ -222,21 +222,21 @@ type DoubleFinder
   DoubleFinder() = new(1, Dict(), Array(Float64, 3, 0))
 end
 
-function (finder::DoubleFinder)(pos, ind)
+@compat (function (finder::DoubleFinder)(pos, ind)
   finder.positions = hcat(finder.positions, pos[:, 1])
   for i in ind
     finder.indexMap[i] = finder.index
   end
   finder.index += 1
-end
+end)
 
-function (checker::BoundsChecker)(pos, ind)
+@compat (function (checker::BoundsChecker)(pos, ind)
   disp = abs(maximum(pos, 2) - minimum(pos, 2))
   if disp[1] > checker.disp[1] checker.disp[1] = disp[1] end
   if disp[2] > checker.disp[2] checker.disp[2] = disp[2] end
   if disp[3] > checker.disp[3] checker.disp[3] = disp[3] end
   if size(pos)[2] > checker.count checker.count = size(pos)[2] end
-end
+end)
 
 "Return a list of int sets corresponding to the indices that now refer to the same position"
 function findDoubles(positions, tol, verbose)
